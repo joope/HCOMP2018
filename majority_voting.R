@@ -1,7 +1,7 @@
 #Ex. 1
 library(glmnet)
 #Read the mushrooms data
-data_mushrooms <- read.table("data_mushrooms.txt", header=FALSE, sep=",")
+data_mushrooms <- read.table("./agaricus-lepiota.data.txt", header=FALSE, sep=",")
 #clases y - first column. 
 dim(data_mushrooms)
 head(data_mushrooms)
@@ -24,12 +24,12 @@ head(mushrooms_Dexp)
 #rbinom(n, size, prob): n - number of observations, 
 #size - number of trials, prob - prob of success of each trial
 nois = rbinom(N,1,0.3)
-lbl = mushrooms_Dexp$label
-lbl[mushrooms_Dexp$label==1 & nois] = 2
-lbl[mushrooms_Dexp$label==2 & nois] = 1
+label = mushrooms_Dexp$label
+label[mushrooms_Dexp$label==1 & nois] = 2
+label[mushrooms_Dexp$label==2 & nois] = 1
 
 #data table for Worker_1:
-mushrooms_D_worker_1=data.table(ID=c(1:N), ID_worker=rep(1,N), label=lbl) 
+mushrooms_D_worker_1=data.table(ID=c(1:N), ID_worker=rep(1,N), label=label) 
 
 #simulate noisy data, 30% noise for 10 workers. 
 workers_l<-matrix(NA,nrow=N, ncol=10)
