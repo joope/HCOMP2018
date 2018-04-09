@@ -5,45 +5,68 @@
 # load mushroom data
 mushrooms_original <- read.csv("data/mushroom.csv")
 library(data.table)
-N<-length(mushrooms_original[,1])
+N<-nrow(mushrooms_original)
 head(mushrooms_original)
-
-#load 2n data
-
-#load 3rd data
-
-#DATA PREPROCESSING FOR CREATING MULTIPLE WORKERS
-# IDs ; labels = (1,2) 1-eatable, 2 - poisonous
+data1 <- mushrooms_original
 
 mushrooms=data.table(ID=c(1:N), label=c(mushrooms_original$class))
-head(mushrooms)
-mushrooms$label
+data1_expertlabels <- mushrooms$label
 
-#SIMULATE NOISY DATA (30% noise) FOR 10 WORKERS. 
+#load 2n data
+library(datasets)
+data(iris)
+head(iris)
+data2 <- iris
+
+iris_flowers=data.table(ID=c(1:nrow(iris)), label=c(iris$Species))
+data2_expertlabels <- iris_flowers$label
+
+unique(data2_expertlabels)
+
+#load 3rd data
+#TODO
+
+
+#SIMULATE NOISY DATA with X% noise FOR N WORKERS. 
 
 #function to simulate noisy labels
 simulateNoisyWorkers <- function(amount_of_workers, amount_of_noise, expertlabel){
+  label_values <- unique(expertlabel)
+  N=length(expertlabel)
   workers_with_noisy_labels<-matrix(NA,nrow=N, ncol=amount_of_workers)
   for (i in 1:amount_of_workers) {
-    noise <- rbinom(N,1,amount_of_noise)
+    #generates which labels are noisy for each worker
+    noise <- rbinom(N,1,amount_of_noise) # 0,1,1 etc
     labels <- expertlabel
-    labels[expertlabel==1 & noise] <- 2
-    labels[expertlabel==2 & noise] <- 1
+    for(j in 1:N){
+      # 1 == noisy label
+      if(noise[j] == 1){
+        #replace the chosen noisy labels with incorret values
+        wrong_labels_for_row_j <- label_values[which(label_values != expertlabel[j])]
+        labels[j]<- wrong_labels_for_row_j[sample(1:length(wrong_labels_for_row_j),1)]
+      }
+    }
+    #save noisy labels to matrix
     workers_with_noisy_labels[,i] <- labels
   }
+  
   return(workers_with_noisy_labels)
 }
 
 
-workers_labels<-simulateNoisyWorkers(10,0.3,mushrooms$label)
+data1_workers_labels<-simulateNoisyWorkers(1,0.7,data1_expertlabels)
+data2_workers_labels<-simulateNoisyWorkers(1,0.7,data2_expertlabels)
 
 #confirm 70% labels are indetical with expert labels
-res <- workers_labels == mushrooms$label
-length(res[res==TRUE])/(10*nrow(res))
+res <- data1_workers_labels == data1_expertlabels
+length(res[res==FALSE])/(ncol(res)*nrow(res))
+
+res <- data2_workers_labels == data2_expertlabels
+length(res[res==FALSE])/(ncol(res)*nrow(res))
 
 #------------------------------
 
-#MAJOTRITY VOTING to reduce multiple labels
+#CONSENSUS ALG 1: MAJOTRITY VOTING to reduce multiple labels
 #install.packages("mclust")
 library(mclust) 
 
@@ -54,25 +77,30 @@ majorityVotingForLabels <- function(workers_labels){
   for (i in 1:N) {
     labels_majorityvoting[i]<-(majorityVote(workers_labels[i,]))$majority
   }
-  
-  #combine majority voted labels with original mushroom data
-  labels_majorityvoting <- sapply(labels_majorityvoting, function(x){ifelse(x== "2", 'p', 'e')})
-  labels_majorityvoting <- as.factor(labels_majorityvoting)
-  
   return(labels_majorityvoting)
 }  
 
-labels_majorityvoting <- majorityVotingForLabels(workers_labels)
-mushrooms_majorityvotinglabels<-cbind(labels_majorityvoting, mushrooms_original[,-1])
-head(mushrooms_majorityvotinglabels)
-names(mushrooms_majorityvotinglabels)[names(mushrooms_majorityvotinglabels) == "labels_majorityvoting"] = "class" 
-
-#USE GOLDEN LABELS to reduce multiple labels
+#CONSENSUS ALG 2: USE GOLDEN LABELS to reduce multiple labels with majority voting
 
 goldenLabelCheckForLabels <- function(workers_labels){
   #TODO
   return(NULL)
 }
+
+
+#combine majority voted labels with original mushroom data
+data1_labels_majorityvoting <- majorityVotingForLabels(data1_workers_labels)
+data1_labels_majorityvoting <- sapply(data1_labels_majorityvoting, function(x){ifelse(x== "2", 'p', 'e')})
+data1_labels_majorityvoting <- as.factor(data1_labels_majorityvoting)
+mushrooms_majorityvotinglabels<-cbind(data1_labels_majorityvoting, data1[,-1])
+names(mushrooms_majorityvotinglabels)[names(mushrooms_majorityvotinglabels) == "data1_labels_majorityvoting"] = "class" 
+
+#combine majority voted labels with original iris data
+data2_labels_majorityvoting <- majorityVotingForLabels(data2_workers_labels)
+data2_labels_majorityvoting <- as.factor(data2_labels_majorityvoting)
+iris_majorityvotinglabels<-cbind(data2_labels_majorityvoting, data2[,-5])
+names(iris_majorityvotinglabels)[names(iris_majorityvotinglabels) == "data2_labels_majorityvoting"] = "class" 
+
 
 
 #------------------------------
@@ -85,19 +113,4 @@ goldenLabelCheckForLabels <- function(workers_labels){
 
 
 
-# simulateNoisyDataset <- function(dataset, workerAccuracy){
-#  simulated = dataset
-#  simulated$noise <- rbinom(nrow(dataset), 1, workerAccuracy)
-  
-  # Simulate noise to classes. If noise == 0 swap classes
-#  simulated$class[dataset$class == 1 & simulated$noise == 0] = 0
-#  simulated$class[dataset$class == 0 & simulated$noise == 0] = 1
-#  simulated$class[dataset$class == 1 & simulated$noise == 1] = 1
-#  simulated$class[dataset$class == 0 & simulated$noise == 1] = 0
-  
-#  simulated$class = factor(simulated$class)
-#  simulated$noise <- NULL
-  
-#  return(simulated)
-#}
 
