@@ -15,6 +15,8 @@ str(data_mushrooms_KAGGLE)
 #--------------------------------------
 #DATA PREPROCESSING
 #1. Dexp = (ID, labels); labels = (1,2) 1-eatable, 2 - poisonous
+mushrooms_Dexp=data.table(ID=c(1:N), label=c(data_mushrooms_KAGGLE[,1]))
+head(mushrooms_Dexp)
 
 #change levels of first column to e=0, p=1. 
 #levels(data_mushrooms[,1])<-c(0,1) #'0','1'
@@ -30,8 +32,8 @@ N<-length(data_mushrooms_KAGGLE[,1])
 #Empty matrix of 10 workers. 
 workers_l<-matrix(NA,nrow=N, ncol=10)
 
-#First 2 workers are true experts, noise = 5%
-for (i in 1:2) {
+#First 1 worker is true expert, noise = 5%
+for (i in 1:1) {
   nois = rbinom(N,1,0.05)
   lbs = mushrooms_Dexp$label
   lbs[mushrooms_Dexp$label==1 & nois]=2
@@ -39,8 +41,8 @@ for (i in 1:2) {
   workers_l[,i]=lbs
 }
 
-#Second part of 2 workers are experts, noise = 20%
-for (i in 3:4) {
+#Second part of 1 workers are experts, noise = 20%
+for (i in 2:2) {
   nois = rbinom(N,1,0.2)
   lbs = mushrooms_Dexp$label
   lbs[mushrooms_Dexp$label==1 & nois]=2
@@ -49,7 +51,7 @@ for (i in 3:4) {
 }
 
 #Third part of 3 workers are amateurs, noise = 40%
-for (i in 5:7) {
+for (i in 3:6) {
   nois = rbinom(N,1,0.4)
   lbs = mushrooms_Dexp$label
   lbs[mushrooms_Dexp$label==1 & nois]=2
@@ -59,7 +61,7 @@ for (i in 5:7) {
 
 #Last fourth part of 3 workers are adversaries, 
 #completely random labeling; probability for every label = 0.5
-for (i in 8:10) {
+for (i in 7:10) {
   nois = 1+rbinom(N,1,0.50)
   workers_l[,i]=nois
 }
@@ -280,3 +282,4 @@ tic_tac_toe_game <- read.table("tic_tac_toe_game.txt", header=FALSE, sep=",")
 #classes y - last column. 
 dim(tic_tac_toe_game)
 head(tic_tac_toe_game)
+

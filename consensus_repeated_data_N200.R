@@ -8,6 +8,8 @@ data_mushrooms_KAGGLE <- read.csv("mushroomsKAGGLE.csv")
 #--------------------------------------
 #DATA PREPROCESSING
 #1. Dexp = (ID, labels); labels = (1,2) 1-eatable, 2 - poisonous
+mushrooms_Dexp=data.table(ID=c(1:N), label=c(data_mushrooms_KAGGLE[,1]))
+head(mushrooms_Dexp)
 
 library(data.table)
 #take only half of the data
@@ -38,7 +40,7 @@ for (i in 21:40) {
   workers_l[,i]=lbs
 }
 
-#Third part of 35 workers are amateurs, noise = 40%
+#Third part of 70 workers are amateurs, noise = 40%
 for (i in 41:110) {
   nois = rbinom(N,1,0.4)
   lbs = mushrooms_Dexp[1:N,]$label
@@ -47,7 +49,7 @@ for (i in 41:110) {
   workers_l[,i]=lbs
 }
 
-#Last fourth part of 45 workers are adversaries, 
+#Last fourth part of 90 workers are adversaries, 
 #completely random labeling; probability for every label = 0.5
 for (i in 111:200) {
   nois = 1+rbinom(N,1,0.50)

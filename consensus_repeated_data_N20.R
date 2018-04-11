@@ -8,6 +8,8 @@ data_mushrooms_KAGGLE <- read.csv("mushroomsKAGGLE.csv")
 #--------------------------------------
 #DATA PREPROCESSING
 #1. Dexp = (ID, labels); labels = (1,2) 1-eatable, 2 - poisonous
+mushrooms_Dexp=data.table(ID=c(1:N), label=c(data_mushrooms_KAGGLE[,1]))
+head(mushrooms_Dexp)
 
 library(data.table)
 #take only half of the data
@@ -20,8 +22,8 @@ N<-(length(data_mushrooms_KAGGLE[,1]))/2
 #Empty matrix of 20 workers. 
 workers_l<-matrix(NA,nrow=N, ncol=20)
 
-#First 4 workers are true experts, noise = 5%
-for (i in 1:4) {
+#First 2 workers are true experts, noise = 5%
+for (i in 1:2) {
   nois = rbinom(N,1,0.05)
   lbs = mushrooms_Dexp[1:N,]$label
   lbs[mushrooms_Dexp[1:N,]$label==1 & nois]=2
@@ -29,8 +31,8 @@ for (i in 1:4) {
   workers_l[,i]=lbs
 }
 
-#Second part of 4 workers are experts, noise = 20%
-for (i in 5:8) {
+#Second part of 2 workers are experts, noise = 20%
+for (i in 3:4) {
   nois = rbinom(N,1,0.2)
   lbs = mushrooms_Dexp[1:N,]$label
   lbs[mushrooms_Dexp[1:N,]$label==1 & nois]=2
@@ -38,8 +40,8 @@ for (i in 5:8) {
   workers_l[,i]=lbs
 }
 
-#Third part of 6 workers are amateurs, noise = 40%
-for (i in 9:14) {
+#Third part of 8 workers are amateurs, noise = 40%
+for (i in 5:12) {
   nois = rbinom(N,1,0.4)
   lbs = mushrooms_Dexp[1:N,]$label
   lbs[mushrooms_Dexp[1:N,]$label==1 & nois]=2
@@ -47,9 +49,9 @@ for (i in 9:14) {
   workers_l[,i]=lbs
 }
 
-#Last fourth part of  workers are adversaries, 
+#Last fourth part of 8 workers are adversaries, 
 #completely random labeling; probability for every label = 0.5
-for (i in 15:20) {
+for (i in 13:20) {
   nois = 1+rbinom(N,1,0.50)
   workers_l[,i]=nois
 }

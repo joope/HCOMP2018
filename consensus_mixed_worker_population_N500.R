@@ -48,8 +48,8 @@ for (i in 51:100) {
   workers_l[,i]=lbs
 }
 
-#Third part of 150 workers are amateurs, noise = 40%
-for (i in 101:250) {
+#Third part of 175 workers are amateurs, noise = 40%
+for (i in 101:275) {
   nois = rbinom(N,1,0.4)
   lbs = mushrooms_Dexp$label
   lbs[mushrooms_Dexp$label==1 & nois]=2
@@ -57,9 +57,9 @@ for (i in 101:250) {
   workers_l[,i]=lbs
 }
 
-#Last fourth part of 250 workers are adversaries, 
+#Last fourth part of 225 workers are adversaries, 
 #completely random labeling; probability for every label = 0.5
-for (i in 251:500) {
+for (i in 276:500) {
   nois = 1+rbinom(N,1,0.50)
   workers_l[,i]=nois
 }
