@@ -9,7 +9,7 @@ simulateNoisyWorkers <- function(amount_of_workers, amount_of_noise, expertlabel
   workers_with_noisy_labels<-matrix(NA,nrow=N, ncol=amount_of_workers)
   for (i in 1:amount_of_workers) {
     #generates which labels are noisy for each worker
-    noise <- rbinom(N,1,1-amount_of_noise) # 0,1,1 etc
+    noise <- rbinom(N,1,amount_of_noise) # 0,1,1 etc
     labels <- expertlabel
     for(j in 1:N){
       # 1 == label with noise
@@ -88,42 +88,31 @@ N<-nrow(mushrooms_original)
 head(mushrooms_original)
 data1 <- mushrooms_original
 library(data.table)
-data1_expertlabels=data.table(ID=c(1:N), label=c(mushrooms_original$class))
+data1_expertlabels <- data.table(ID=c(1:N), label=c(mushrooms_original$class))
 data1_expertlabels <- data1_expertlabels$label
 
 
-#partition for mushroom data without class
-nrow(data1)
-length(data1_expertlabels)
-paritionedData <- partitionData(data1[-1,], fractionOfDataForTraining,data1_expertlabels)
+#partition for mushroom data without classes eatable/poisonous
+paritionedData <- partitionData(data1[,-1], fractionOfDataForTraining,data1_expertlabels)
 trainData   <- paritionedData$trainData
 testData    <- paritionedData$testData
 expertlabels_trainData <- paritionedData$trainDataLabels
 expertlabels_testData <- paritionedData$testDataLabels
-length(expertlabels_testData)
-nrow(testData)
-length(expertlabels_trainData)
-nrow(trainData)
 
-#Data wrangling
-amount_of_workers <- 10
-noise_level <- 0.6
-# incorret labels 1-20%
+
+#Add noise to train data labels
+amount_of_workers <- 20
+noise_level <- 0.4 # x% amount incorret labels
+#simulate multiple labels with noive level x%
 data1_workers_labels_testData <-simulateNoisyWorkers(amount_of_workers,noise_level,expertlabels_testData)
-#cbind(labels_majorityvoting, data)
 #majorityvoting for noisy labels
-nrow(data1_workers_labels_testData)
-nrow(testData)
 data1_labels_majorityvoting <- majorityVotingForLabels(data1_workers_labels_testData, testData)
-head(data1_labels_majorityvoting)
-nrow(data1_labels_majorityvoting)
-
 trainData <- data1_labels_majorityvoting
-nrow(trainData)
 
 #calculate the amount of noise in majority voted labels
-res <- trainData$class == expertlabels_testData
+res <- data1_labels_majorityvoting$class == expertlabels_testData
 length(res[res==TRUE])/(length(res))
+
 
 #RUN 3 DIFFERENT CLASSIFICATION ALGORITHMS
 
@@ -133,15 +122,16 @@ library(e1071)
 schema <- class ~ odor + spore.print.color
 model_svm <- svm(schema , trainData)
 pred <- predict(model_svm, testData)
-length(pred)
-length(expertlabels_testData)
-
-head(as.numeric(pred))
-head(expertlabels_testData)
 
 #calculate correct predictions  
 res <- as.numeric(pred) == expertlabels_testData
 length(res[res==TRUE])/(length(res))
+
+predictions_for_majorityvoted_labels <- sapply(as.numeric(pred), function(x){ifelse(x== "2", 'p', 'e')})
+expertlabels_testData <- sapply(expertlabels_testData, function(x){ifelse(x== "2", 'p', 'e')})
+table(predictions_for_majorityvoted_labels,expertlabels_testData)
+
+#with 100% correct labels accuracy is 0.8548065
 
 #Plot the predictions and the plot to see our model fit
 
