@@ -1,29 +1,4 @@
-#https://rpubs.com/hcrews47/mushroom
-#Mushroom data contains observations from 23 different mushrooms
-
-
-# load mushroom data
-mushrooms_original <- read.csv("data/mushroom.csv")
-library(data.table)
-N<-nrow(mushrooms_original)
-head(mushrooms_original)
-data1 <- mushrooms_original
-
-mushrooms=data.table(ID=c(1:N), label=c(mushrooms_original$class))
-data1_expertlabels <- mushrooms$label
-
-#load 2nd data
-library(datasets)
-data(iris)
-head(iris)
-data2 <- iris
-
-iris_flowers=data.table(ID=c(1:nrow(iris)), label=c(iris$Species))
-data2_expertlabels <- iris_flowers$label
-
-#load 3rd data
-#TODO
-
+## Functions
 
 #SIMULATE NOISY DATA with X% noise FOR N WORKERS. 
 
@@ -51,17 +26,6 @@ simulateNoisyWorkers <- function(amount_of_workers, amount_of_noise, expertlabel
   return(workers_with_noisy_labels)
 }
 
-noise_level <- 0.3
-# incorret labels 30%
-data1_workers_labels<-simulateNoisyWorkers(1,noise_level,data1_expertlabels)
-data2_workers_labels<-simulateNoisyWorkers(1,noise_level,data2_expertlabels)
-
-#confirm 70% labels are indetical/correct with expert labels
-res <- data1_workers_labels == data1_expertlabels
-length(res[res==TRUE])/(ncol(res)*nrow(res))
-
-res <- data2_workers_labels == data2_expertlabels
-length(res[res==TRUE])/(ncol(res)*nrow(res))
 
 #------------------------------
 
@@ -70,12 +34,17 @@ length(res[res==TRUE])/(ncol(res)*nrow(res))
 library(mclust) 
 
 # apply the majority voting to worker labels
-majorityVotingForLabels <- function(workers_labels){
+# cbind majority votes to data 
+# data  cant have the original labels anymore
+majorityVotingForLabels <- function(workers_labels,data){
   N <- nrow(workers_labels)
   labels_majorityvoting<-rep(0, times=N)
   for (i in 1:N) {
     labels_majorityvoting[i]<-(majorityVote(workers_labels[i,]))$majority
   }
+  labels_majorityvoting <- as.factor(labels_majorityvoting)
+  labels_majorityvoting<-cbind(labels_majorityvoting, data)
+  names(labels_majorityvoting)[names(labels_majorityvoting) == "labels_majorityvoting"] = "class" 
   return(labels_majorityvoting)
 }  
 
@@ -86,24 +55,6 @@ goldenLabelCheckForLabels <- function(workers_labels){
 }
 
 
-#combine majority voted labels with original mushroom data
-data1_labels_majorityvoting <- majorityVotingForLabels(data1_workers_labels)
-data1_labels_majorityvoting <- sapply(data1_labels_majorityvoting, function(x){ifelse(x== "2", 'p', 'e')})
-data1_labels_majorityvoting <- as.factor(data1_labels_majorityvoting)
-mushrooms_majorityvotinglabels<-cbind(data1_labels_majorityvoting, data1[,-1])
-names(mushrooms_majorityvotinglabels)[names(mushrooms_majorityvotinglabels) == "data1_labels_majorityvoting"] = "class" 
-
-#combine golden label majority voted labels with original mushroom data
-#TODO
-
-#combine majority voted labels with original iris data
-data2_labels_majorityvoting <- majorityVotingForLabels(data2_workers_labels)
-data2_labels_majorityvoting <- as.factor(data2_labels_majorityvoting)
-iris_majorityvotinglabels<-cbind(data2_labels_majorityvoting, data2[,-5])
-names(iris_majorityvotinglabels)[names(iris_majorityvotinglabels) == "data2_labels_majorityvoting"] = "class" 
-
-#combine golden label majority voted labels with original iris data
-#TODO
 
 #------------------------------
 
@@ -113,35 +64,102 @@ set.seed(1234)
 
 fractionOfDataForTraining = 0.7 #70% train and 30% test data. 
 
-partitionData <- function( data, fractionOfDataForTraining){
+partitionData <- function( data, fractionOfDataForTraining, expertlabels){
   numberOfRows <- nrow( data )
   randomRows   <- runif(numberOfRows)
+  #print(randomRows)
   flag         <- randomRows <= fractionOfDataForTraining
   trainData <- data[ flag, ]
   testData  <- data[ !flag, ]
-  dataSetSplit <- list( trainData = trainData, testData = testData )
+  dataSetSplit <- list( trainData = trainData, testData = testData, trainDataLabels=expertlabels[flag],testDataLabels=expertlabels[!flag] )
   dataSetSplit
 }
 
-#partition for mushroom data for first and second consesus algorithm
-paritionedData <- partitionData(mushrooms_majorityvotinglabels, fractionOfDataForTraining)
+#-----------------------------------
+
+#https://rpubs.com/hcrews47/mushroom
+#Mushroom data contains observations from 23 different mushrooms
+
+
+# load mushroom data
+mushrooms_original <- read.csv("mushroom.csv")
+
+N<-nrow(mushrooms_original)
+head(mushrooms_original)
+data1 <- mushrooms_original
+library(data.table)
+data1_expertlabels=data.table(ID=c(1:N), label=c(mushrooms_original$class))
+data1_expertlabels <- data1_expertlabels$label
+
+
+#partition for mushroom data without class
+nrow(data1)
+length(data1_expertlabels)
+paritionedData <- partitionData(data1[-1,], fractionOfDataForTraining,data1_expertlabels)
 trainData   <- paritionedData$trainData
 testData    <- paritionedData$testData
+expertlabels_trainData <- paritionedData$trainDataLabels
+expertlabels_testData <- paritionedData$testDataLabels
+length(expertlabels_testData)
+nrow(testData)
+length(expertlabels_trainData)
+nrow(trainData)
 
-#partition for golden label majority voted labels, mushroom data
-#TODO
+#Data wrangling
+amount_of_workers <- 10
+noise_level <- 0.6
+# incorret labels 1-20%
+data1_workers_labels_testData <-simulateNoisyWorkers(amount_of_workers,noise_level,expertlabels_testData)
+#cbind(labels_majorityvoting, data)
+#majorityvoting for noisy labels
+nrow(data1_workers_labels_testData)
+nrow(testData)
+data1_labels_majorityvoting <- majorityVotingForLabels(data1_workers_labels_testData, testData)
+head(data1_labels_majorityvoting)
+nrow(data1_labels_majorityvoting)
 
-#partition for 2nd data, 2 different consensus algorithms
-#TODO
+trainData <- data1_labels_majorityvoting
+nrow(trainData)
 
-#partition for 3rd data, 2 different consensus algorithms
-#TODO
-
-
-#-----------------
+#calculate the amount of noise in majority voted labels
+res <- trainData$class == expertlabels_testData
+length(res[res==TRUE])/(length(res))
 
 #RUN 3 DIFFERENT CLASSIFICATION ALGORITHMS
 
+library(e1071)
+
+#Fit a model and support vector machine prediction
+schema <- class ~ odor + spore.print.color
+model_svm <- svm(schema , trainData)
+pred <- predict(model_svm, testData)
+length(pred)
+length(expertlabels_testData)
+
+head(as.numeric(pred))
+head(expertlabels_testData)
+
+#calculate correct predictions  
+res <- as.numeric(pred) == expertlabels_testData
+length(res[res==TRUE])/(length(res))
+
+#Plot the predictions and the plot to see our model fit
+
+#points(trainData$class, pred, col = "blue", pch=4)
 
 
+
+
+
+#load 2nd data
+#library(datasets)
+#data(iris)
+#head(iris)
+#data2 <- iris
+
+#iris_flowers=data.table(ID=c(1:nrow(iris)), label=c(iris$Species))
+#data2_expertlabels <- iris_flowers$label
+
+#load 3rd data
+#TODO
 
