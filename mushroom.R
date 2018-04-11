@@ -82,10 +82,10 @@ partitionData <- function( data, fractionOfDataForTraining, expertlabels){
 
 
 # load mushroom data
-mushrooms_original <- read.csv("mushroom.csv")
+mushrooms_original <- read.csv("mushroomsKAGGLE.csv")
 
 N<-nrow(mushrooms_original)
-head(mushrooms_original)
+#head(mushrooms_original)
 data1 <- mushrooms_original
 library(data.table)
 data1_expertlabels <- data.table(ID=c(1:N), label=c(mushrooms_original$class))
@@ -102,7 +102,7 @@ expertlabels_testData <- paritionedData$testDataLabels
 
 #Add noise to train data labels
 amount_of_workers <- 20
-noise_level <- 0.4 # x% amount incorret labels
+noise_level <- 0.50 # x% amount incorret labels
 #simulate multiple labels with noive level x%
 data1_workers_labels_testData <-simulateNoisyWorkers(amount_of_workers,noise_level,expertlabels_testData)
 #majorityvoting for noisy labels
@@ -115,7 +115,7 @@ length(res[res==TRUE])/(length(res))
 
 
 #RUN 3 DIFFERENT CLASSIFICATION ALGORITHMS
-
+#install.packages("e1071")
 library(e1071)
 
 #Fit a model and support vector machine prediction
@@ -131,15 +131,39 @@ predictions_for_majorityvoted_labels <- sapply(as.numeric(pred), function(x){ife
 expertlabels_testData <- sapply(expertlabels_testData, function(x){ifelse(x== "2", 'p', 'e')})
 table(predictions_for_majorityvoted_labels,expertlabels_testData)
 
-#with 100% correct labels accuracy is 0.8548065
+#-------------------------------------
 
 #Plot the predictions and the plot to see our model fit
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(0,0,xlab="workers", ylab="accuracy",xlim = c(0,50),ylim = c(0.3,1),type = "n")
+cl <- rainbow(5)
 
-#points(trainData$class, pred, col = "blue", pch=4)
+y3to30 <- c(3,5,10,20,30)
+y3to50 <- c(3,5,10,20,30,40,50)
 
+#30% noise
+accuracy30 <- c(0.9941545,0.9941545,0.9941545,0.9941545,0.9941545)
+lines(y3to30,accuracy30,col = cl[1],type = 'b')
 
+#40% noise
+accuracy40 <- c(0.9895616,0.9941545,0.9941545,0.9941545,0.9941545)
+lines(y3to30,accuracy40,col = cl[2],type = 'b')
 
+#45% noise
+accuracy45 <- c(0.9812109,0.9707724,0.9837161,0.9837161,0.9837161)
+lines(y3to30,accuracy45,col = cl[3],type = 'b')
 
+#49 noise
+accuracy49 <- c(0.593737,0.6772443,0.8964509,0.8939457,0.9177453,0.9453027,0.9453027)
+lines(y3to50,accuracy49,col = cl[4],type = 'b')
+
+#50% noise
+accuracy50 <- c(0.3139875,0.5244259,0.514405,0.3348643,0.406263,0.8617954,0.34238)
+lines(y3to50,accuracy50,col = cl[5],type = 'b')
+
+#par(xpd=TRUE)
+legend("topright", inset=c(-0.3,0), legend=c("30%", "40%","45%","49%","50%"),
+       col=cl, lty=1:2, cex=0.8)
 
 #load 2nd data
 #library(datasets)
