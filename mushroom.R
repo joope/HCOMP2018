@@ -26,6 +26,39 @@ simulateNoisyWorkers <- function(amount_of_workers, amount_of_noise, expertlabel
   return(workers_with_noisy_labels)
 }
 
+#function to simulate mixed noisy labels
+#true experts 5% - 1/10, 
+#experts 20% noise - 3/10 
+#amateurs, 40% noise - 3/10, 
+#and 3/10 adversaries aka random labels. 
+#takes only values like 10, 20, 30 etc
+simulateNoisyWorkersMixedPopulation <- function(amount_of_workers, expertlabel){
+  amount_of_workers <- c(0.1,0.3,0.3,0.3)*amount_of_workers
+  amount_of_noise <- c(0.05,0.2,0.4,0.75)
+
+  mixed_population <- NA
+  t_experts <- simulateNoisyWorkers(amount_of_workers[1],amount_of_noise[1],expertlabel)
+  experts <- simulateNoisyWorkers(amount_of_workers[2],amount_of_noise[2],expertlabel)
+  mixed_population <- cbind(t_experts, experts)
+  amateurs <- simulateNoisyWorkers(amount_of_workers[2],amount_of_noise[3],expertlabel)
+  mixed_population <- cbind(mixed_population, amateurs)
+  adversasiers <- generateRandomLabels(amount_of_workers[4],expertlabel)
+  mixed_population <- cbind(mixed_population, adversasiers)
+  
+  return(mixed_population)
+}
+
+
+generateRandomLabels <- function(amount_of_workers,expertlabel){
+  classes <- unique(expertlabel)
+  N <- length(expertlabel)
+  workers_with_noisy_labels<-matrix(NA,nrow=N, ncol=amount_of_workers)
+  for (i in 1:amount_of_workers) {
+    workers_with_noisy_labels[,i] <- sample(1:tail(classes,1), N,T)
+  }
+  return(workers_with_noisy_labels)
+}
+
 
 #------------------------------
 
@@ -53,7 +86,6 @@ goldenLabelCheckForLabels <- function(workers_labels){
   #TODO
   return(NULL)
 }
-
 
 
 #------------------------------
@@ -84,6 +116,7 @@ partitionData <- function( data, fractionOfDataForTraining, expertlabels){
 # load mushroom data
 mushrooms_original <- read.csv("mushroomsKAGGLE.csv")
 
+
 N<-nrow(mushrooms_original)
 #head(mushrooms_original)
 data1 <- mushrooms_original
@@ -105,6 +138,8 @@ amount_of_workers <- 20
 noise_level <- 0.50 # x% amount incorret labels
 #simulate multiple labels with noive level x%
 data1_workers_labels_testData <-simulateNoisyWorkers(amount_of_workers,noise_level,expertlabels_testData)
+#data1_workers_labels_testData <- simulateNoisyWorkersMixedPopulation(amount_of_workers,expertlabels_testData)
+
 #majorityvoting for noisy labels
 data1_labels_majorityvoting <- majorityVotingForLabels(data1_workers_labels_testData, testData)
 trainData <- data1_labels_majorityvoting
