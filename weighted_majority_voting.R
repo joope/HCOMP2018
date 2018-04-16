@@ -12,7 +12,7 @@ weighted_majority_voting <- function(labelset)
   # vector of zeros is initialised for worker scores
   scores <- rep(0, cols)
   # vector for all different possible labels
-  labelspace <- vector()
+  labelspace <- c(dataset[1, 1])
   
   # library for general majority voting
   library(mclust)
@@ -22,14 +22,15 @@ weighted_majority_voting <- function(labelset)
   # get majority vote   
     freq <- (majorityVote(dataset[i,]))$majority
     for (j in 1:cols){
+      currentlabel <- dataset[i, j]
       # see if worker voted for the most frequent label
-      if (identical(dataset[i, j], freq)){
+      if (identical(toString(currentlabel), freq)){
         # increment score if true
         scores[j] = scores[j] + 1
       }
       # collect unseen labels to labelspace vector
-      if(!(dataset[i, j] %in% labelspace)){
-        append(labelspace, dataset[i, j])
+      if(!(is.element(currentlabel, labelspace))){
+        append(labelspace, currentlabel)
       }
     }
   }
