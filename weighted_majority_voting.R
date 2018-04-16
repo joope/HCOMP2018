@@ -5,10 +5,12 @@ weighted_majority_voting <- function(labelset)
   dataset <- labelset
   rows <- length(dataset[,1])
   cols <- length(dataset[1,])
+  datatype <- typeof(dataset[1, 1])
+  
   # vector for final labels (consensus labels)
-  labels <- vector(rows)
-  # list of zeros is initialised for worker scores
-  scores <- list(rep(0, cols))
+  labels <- vector(datatype, length = rows)
+  # vector of zeros is initialised for worker scores
+  scores <- rep(0, cols)
   # vector for all different possible labels
   labelspace <- vector()
   
