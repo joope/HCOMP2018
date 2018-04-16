@@ -5,7 +5,6 @@ weighted_majority_voting <- function(dataset)
   rows <- length(dataset[,i])
   cols <- length(dataset[i,])
   labels <- vector(rows)
-  workers <- vector(cols)
   # list of zeros is initialised for worker scores
   scores <- list(rep(0,cols))
   # vector for all different possible labels
