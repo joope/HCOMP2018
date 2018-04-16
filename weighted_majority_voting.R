@@ -53,7 +53,8 @@ weighted_majority_voting <- function(labelset)
       weight <- 1
       if(scores[j]<expert_threshold){
         weight <- weight - 0.4
-      }if(scores[j]<spammer_threshold){
+      }
+      if(scores[j]<spammer_threshold){
         weight <- 0
       }
       # find label's index in labelspace
