@@ -45,23 +45,25 @@ simulateNoisyWorkersMixedPopulation <- function(amount_of_workers, expertlabel){
 
 #------------------------------
 
-# Algorithm for weighted majority voting
+#CONSENSUS ALG 1: MAJOTRITY VOTING to reduce multiple labels
+#install.packages("mclust")
+library(mclust) 
+
+
 weighted_majority_voting <- function(labelset)
 {
   # all labels given by different workers in matrix
-  dataset <- labelset
+  dataset <- as.matrix(labelset)
   rows <- length(dataset[,1])
   cols <- length(dataset[1,])
-  first <- dataset[1, 1]
-  datatype <- typeof(first)
+  datatype <- typeof(dataset[1, 1])
   
   # vector for final labels (consensus labels)
   labels <- vector(datatype, length = rows)
   # vector of zeros is initialised for worker scores
-  scores <- vector("integer", length = cols)
+  scores <- vector("numeric", length = cols)
   # vector for all different possible labels
-  labelspace <- vector(datatype, length = 1)
-  labelspace[1] <- first
+  labelspace <- c(dataset[1, 1])
   
   # library for general majority voting
   library(mclust)
@@ -79,19 +81,18 @@ weighted_majority_voting <- function(labelset)
       }
       # collect unseen labels to labelspace vector
       if(!(is.element(currentlabel, labelspace))){
-        append(labelspace, currentlabel)
+        labelspace <- append(labelspace, currentlabel)
       }
     }
   }
   
   # copy counted scores
-  sortedscores <- vector("numeric", length = cols)
-  sortedscores <- rep(scores, 1) 
+  sortedscores <- scores 
   # sort scores
   sort(sortedscores)
   
   # choose threshold using appropriate column from sorted scores
-  expert_threshold <- sortedscores[as.integer(4*(cols/10))]
+  expert_threshold <- sortedscores[as.integer(cols-(2*(cols/3)))]
   # choose another threshold
   spammer_threshold <- sortedscores[as.integer(cols-(cols/3))]
   # amount of labels:
@@ -132,17 +133,13 @@ weighted_majority_voting <- function(labelset)
   return(labels)
 }
 
-#CONSENSUS ALG 1: MAJOTRITY VOTING to reduce multiple labels
-#install.packages("mclust")
-library(mclust) 
-
 # apply the majority voting to worker labels
 # cbind majority votes to data 
 # data  cant have the original labels anymore
 majorityVotingForLabels <- function(workers_labels,data){
-  # Use Weighted majority voting!
+ # N <- nrow(workers_labels)
+ # labels_majorityvoting<-rep(0, times=N)
   labels_majorityvoting <- weighted_majority_voting(workers_labels)
-
   labels_majorityvoting <- as.factor(labels_majorityvoting)
   labels_majorityvoting<-cbind(labels_majorityvoting, data)
   names(labels_majorityvoting)[names(labels_majorityvoting) == "labels_majorityvoting"] = "class" 
@@ -236,7 +233,8 @@ getAccuracy <- function(original_data, amount_of_workers, noise_level) {
 # original_data <- read.csv("mushroomsKAGGLE.csv")
 
 # load tic-tac-toe data
-original_data <- read.csv('tic_tac_toe_game.txt')
+# original_data <- read.csv('tica_tac_toe_game.txt')
+original_data <- read.csv('spambase.txt')
 original_data$class <- as.factor(original_data$positive)
 original_data$positive <- NULL
 
@@ -262,3 +260,4 @@ for (r in 1:nrow(results))
 #par(xpd=TRUE)
 legend("topright", inset=c(-0.3,0), legend=c("10%", "20%","30%","40%","50%"),
        col=cl, lty=1:2, cex=0.8)
+
