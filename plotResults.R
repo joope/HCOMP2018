@@ -26,6 +26,22 @@ simulateNoisyWorkers <- function(amount_of_workers, amount_of_noise, expertlabel
   return(workers_with_noisy_labels)
 }
 
+simulateNoisyWorkersMixedPopulation <- function(amount_of_workers, expertlabel){
+  amount_of_workers <- c(0.1,0.3,0.3,0.3)*amount_of_workers
+  amount_of_noise <- c(0.05,0.2,0.4,0.75)
+  
+  mixed_population <- NA
+  t_experts <- simulateNoisyWorkers(amount_of_workers[1],amount_of_noise[1],expertlabel)
+  experts <- simulateNoisyWorkers(amount_of_workers[2],amount_of_noise[2],expertlabel)
+  mixed_population <- cbind(t_experts, experts)
+  amateurs <- simulateNoisyWorkers(amount_of_workers[2],amount_of_noise[3],expertlabel)
+  mixed_population <- cbind(mixed_population, amateurs)
+  adversasiers <- generateRandomLabels(amount_of_workers[4],expertlabel)
+  mixed_population <- cbind(mixed_population, adversasiers)
+  
+  return(mixed_population)
+}
+
 
 #------------------------------
 
@@ -98,6 +114,8 @@ getAccuracy <- function(original_data, amount_of_workers, noise_level) {
 
   #simulate multiple labels with noive level x%
   data1_workers_labels_testData <-simulateNoisyWorkers(amount_of_workers,noise_level,expertlabels_testData)
+  #data1_workers_labels_testData <- simulateNoisyWorkersMixedPopulation(amount_of_workers,expertlabels_testData)
+  
   #majorityvoting for noisy labels
   data1_labels_majorityvoting <- majorityVotingForLabels(data1_workers_labels_testData, testData)
   testData <- data1_labels_majorityvoting
