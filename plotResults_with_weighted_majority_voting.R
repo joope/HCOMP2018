@@ -233,8 +233,7 @@ getAccuracy <- function(original_data, amount_of_workers, noise_level) {
 # original_data <- read.csv("mushroomsKAGGLE.csv")
 
 # load tic-tac-toe data
-# original_data <- read.csv('tica_tac_toe_game.txt')
-original_data <- read.csv('spambase.txt')
+original_data <- read.csv('tica_tac_toe_game.txt')
 original_data$class <- as.factor(original_data$positive)
 original_data$positive <- NULL
 
