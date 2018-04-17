@@ -1,14 +1,18 @@
 
-weighted_majority_voting <- function(dataset)
+weighted_majority_voting <- function(labelset)
 {
-  dataset <- dataset
-  rows <- length(dataset[,i])
-  cols <- length(dataset[i,])
-  labels <- vector(rows)
-  # list of zeros is initialised for worker scores
-  scores <- list(rep(0,cols))
+  # all labels given by different workers in matrix
+  dataset <- labelset
+  rows <- length(dataset[,1])
+  cols <- length(dataset[1,])
+  datatype <- typeof(dataset[1, 1])
+  
+  # vector for final labels (consensus labels)
+  labels <- vector(datatype, length = rows)
+  # vector of zeros is initialised for worker scores
+  scores <- rep(0, cols)
   # vector for all different possible labels
-  labelspace <- vector()
+  labelspace <- c(dataset[1, 1])
   
   # library for general majority voting
   library(mclust)
@@ -18,18 +22,20 @@ weighted_majority_voting <- function(dataset)
   # get majority vote   
     freq <- (majorityVote(dataset[i,]))$majority
     for (j in 1:cols){
-      # see if worker voted the most frequent label
-      if (identical(dataset[i, j], freq)){
+      currentlabel <- dataset[i, j]
+      # see if worker voted for the most frequent label
+      if (identical(toString(currentlabel), freq)){
         # increment score if true
         scores[j] = scores[j] + 1
       }
       # collect unseen labels to labelspace vector
-      if(!(dataset[i, j] %in% labelspace)){
-        append(labelspace, dataset[i, j])
+      if(!(is.element(currentlabel, labelspace))){
+        append(labelspace, currentlabel)
       }
     }
   }
   
+  # copy counted scores
   sortedscores <- scores 
   # sort scores
   sort(sortedscores)
@@ -38,37 +44,40 @@ weighted_majority_voting <- function(dataset)
   expert_threshold <- sortedscores[as.integer(cols-(2*(cols/3)))]
   # choose another threshold
   spammer_threshold <- sortedscores[as.integer(cols-(cols/3))]
+  # amount of labels:
+  labelcount <- length(labelspace)
   
   # majority vote with weights
   for (i in 1:rows){
     # initialise vector for giving scores for labels
-    labelscores <- vector(length(labelspace))
+    labelscores <- rep(0, labelcount)
     for (j in 1:cols){
-      # determine weight based on worker scores
+      # determine weight based on worker scores and thresholds
       weight <- 1
       if(scores[j]<expert_threshold){
-        weight <- weight - 0.7
-      }if(scores[j]<spammer_threshold){
+        weight <- weight - 0.4
+      }
+      if(scores[j]<spammer_threshold){
         weight <- 0
       }
-      # find labels index in labelspace
+      # find label's index in labelspace
       index <- match(dataset[i, j], labelspace)
-      # increment labels weight ponted by index
+      # increment labels weight pointed by index
       labelscores[index] = labelscores[index] + weight 
     }
     best <- 0
-    freq <- 1
+    freqind <- 1
     # iterate labels to see which has biggest weight
-    for (k in 1:length(labelscores)){
+    for (k in 1:labelcount){
       if(labelscores[k]>best){
-        freq <- k
+        freqind <- k
         best <- labelscores[k]
       }
     }
-    # choose the label with biggest weight
-    labels[i] <- labelspace[freq]
+    # choose the label with biggest weight as final label
+    labels[i] <- labelspace[freqind]
   }
   
+  # return final labels
   return(labels)
-  
 }
