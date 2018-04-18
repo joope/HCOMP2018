@@ -7,4 +7,4 @@ Algorithm for weighted majority voting:
 
 2.    Give each vote a weight based on voters scoring level 
 
-3.    Count labels weighted votes together and choose the heaviest label to datapoint's final label 
+3.    Count labels weighted votes together and choose the heaviest label to a datapoint's final label 
