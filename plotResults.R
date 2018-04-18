@@ -148,16 +148,16 @@ getAccuracy <- function(original_data, amount_of_workers, noise_level) {
 # original_data$X1 <- NULL
 
 # load mushroom data
-# original_data <- read.csv("mushroomsKAGGLE.csv")
+#original_data <- read.csv("mushroomsKAGGLE.csv")
 
 # load tic-tac-toe data
 original_data <- read.csv('tic_tac_toe_game.txt')
 original_data$class <- as.factor(original_data$positive)
 original_data$positive <- NULL
 
-amount_of_workers <- c(1, 5, 10, 15, 20, 25, 30)
-noise_level <- c(0.1, 0.2, 0.3, 0.4, 0.5) # x% amount incorret labels
-results <- matrix(nrow=7, ncol = 5)
+amount_of_workers <- c(1, 3, 5, 7, 9, 11, 13)
+noise_level <- c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) # x% amount incorret labels
+results <- matrix(nrow=length(amount_of_workers), ncol=length(noise_level))
 
 for (r in 1:length(amount_of_workers))
   for (c in 1:length(noise_level))
@@ -168,13 +168,13 @@ results
 
 #Plot the predictions and the plot to see our model fit
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(0,0,xlab="workers", ylab="accuracy",xlim = c(0,35),ylim = c(0.3,1),type = "n")
+plot(0,0,xlab="workers", ylab="accuracy",xlim = c(0,14),ylim = c(0.0,1),type = "n")
 cl <- rainbow(7)
 
-for (r in 1:nrow(results))
+for (r in 1:ncol(results))
   lines(amount_of_workers, results[,r], col = cl[r])
 
 #par(xpd=TRUE)
-legend("topright", inset=c(-0.3,0), legend=c("10%", "20%","30%","40%","50%"),
+legend("topright", inset=c(-0.3,0), legend=c("p=0.95", "p=0.9", "p=0.8","p=0.7","p=0.6","p=0.5", "p=0.4"),
        col=cl, lty=1:2, cex=0.8)
 
