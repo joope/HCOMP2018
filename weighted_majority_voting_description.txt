@@ -1,0 +1,10 @@
+
+Algorithm for weighted majority voting: 
+
+ 
+
+1.    Score all workers based on agreeing with majority and collect all possible labels to a set 
+
+2.    Give each vote a weight based on voters scoring level 
+
+3.    Count labels weighted votes together and choose the heaviest label to datapoint's final label 
